@@ -1,0 +1,78 @@
+#!/bin/bash 
+# run using sudo bash F1_F6_TU.sh 
+# consolidated raw data from first and third seqs is in GM_1541_operative folder (there is not second seq) 
+
+echo "Hello Wormstars!"
+echo "Write a name for today results"
+read dirname
+
+#create main directory if non existent
+mkdir -p -- "$dirname"
+
+#define subdirectories
+maindir="$dirname"
+sourcedir="$maindir/source"
+readdir="$maindir/read"
+bamdir="$maindir/bam"
+trackdir="$maindir/tracks"
+countsdir="$maindir/counts"
+resultsdir="$maindir/results"
+
+#create subdirectories
+        mkdir -p $sourcedir
+        mkdir -p $readdir
+        mkdir -p $bamdir
+        mkdir -p $trackdir
+        mkdir -p $countsdir
+        mkdir -p $resultsdir
+
+#set location of raw data
+raw_dir="/home/piwi/Desktop/GM1541_operative"
+
+#generate comma separated list of sample names 
+#ls ~/Desktop/F1_F6_2019/Cutadapted/ > F1_F6_list
+paste -s -d, F1_F6_list > F1_F6_comma_separated.list 
+
+# quality control before trimming
+
+SAMPLES=/home/piwi/Desktop/F1_F6_2019/GM_1541_operative/*.fastq.gz
+for file in $SAMPLES 
+do fastqc "$file"  >>  /home/piwi/Desktop/F1_F6_2019/Quality/*
+done
+
+#cut adaptors according to CATS Diagenode trimming tools for CATS Library Preparation Kits
+
+for file in *.fastq.gz
+do
+cutadapt --trim-n -a GATCGGAAGAGCACACGTCTG -a AGAGCACACGTCTG $file | cutadapt -u 3 -a A{100} --no-indels -e 0.16666666666666666 - | cutadapt -O 8 --match-read-wildcards -g GTTCAGAGTTCTACAGTCCGACGATCSSS -m 18 -o home/piwi/Desktop/F1_F6_2019/GM1541_operative/Cutadapted/trimmed_$file -
+done
+
+# quality control after trimming
+
+CUTADAPT_OUTPUT=/home/piwi/Desktop/F1_F6_2019/Quality/trimmed_*.fastq.gz
+for file in $CUTADAPT_OUTPUT 
+do fastqc "$file"  >>  /home/piwi/Desktop/F1_F6_2019/Quality_trimmed/*
+
+##step 2 mapping (change directory) for trimmed_file in trimmed_*.fastq.gz do
+
+ genome="ref$j"
+ ref=${!genome}
+#indexing of reference file with bowtie
+ bowtie2-build -f $ref $sourcedir/$j
+
+ list="samplelist_$j"
+ for i in ${!list}
+ do
+ read1="$readdir/${i}_trim.fastq"
+# output="$bamdir/$i.bam"
+ sorted="$bamdir/${i}_sorted"
+
+#bowtie: map reads to reference genome. Doesn't report reads that can map in more than one place on the genome. Doesn't report alignments with mismatched nucleotides. 
+#As default parameters the quality score is encoded in phred33.
+#bowtie2: map reads in fastq format to reference genome. the quality score of the reads is encoded in phred33. Doesn't report reads that can map in more than one place on the genome. Doesn't allow mismatched nucleotides in seed alignment (seed set to 17 as it is the length of the smallest read we filtered (default is 20)). The seed interval (how separated are seeds taken from one read) is calculated as f(x) = 0 + 2.5 * sqrt(x), where x is the read length (roughly two seeds per reads as reads are 36 or smaller). These seeding parameters should enable a rapid mapping and little overlap is needed (I think) as we allow no mismatch and reads are short. By default, 15% of ambiguous character per read is allowed. Need to add a gap penalty high enough to avoid mapping of reads with gaps (or check if revert to bowtie 1)
+ #bowtie2 -q --phred33 -N 0 -L 17 -i S,0,2.50 -x $sourcedir/$j -U $read1 | samtools view -bSh - | samtools sort - $sorted
+
+for file in ~/Desktop/F1_F6_2019/GM1541_operative/Cutadapted; do bowtie2 -q --phred33 -N 0 -L 17 -i S,0,2.50 -x PAO_F1_F6 -U $file; 
+
+for file in ~/home/mlegue/Cutadapted/trimmed*; do bowtie2 -q --phred33 -N 0 -L 17 -i S,0,2.50 -x PAO_F1_F6 -U $file; done
+
