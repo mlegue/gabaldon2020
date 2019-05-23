@@ -1,0 +1,2 @@
+
+for file in ~/home/mlegue/Cutadapted/trimmed*; do bowtie2 -q --phred33 -N 0 -L 17 -i S,0,2.50 -x PAO_F1_F6 -U $file -S ${file}_aligned.sam; done
