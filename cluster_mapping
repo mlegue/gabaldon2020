@@ -6,6 +6,6 @@
 #SBATCH --output=salida.txt
 #SBATCH --error=error.txt
 
-module load MPI/GCC/6.3.0-2.27/OpenMPI/2.0.2/Bowtie2/2.3.2
+module load Bowtie2
 
 for file in trimmed*; do bowtie2 -q --phred33 -N 0 -L 17 -i S,0,2.50 -x PAO_F1_F6 -U $file -S mapped_$file; done
