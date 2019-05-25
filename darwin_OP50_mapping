@@ -8,4 +8,4 @@
 
 module load Bowtie2
 
-for file in trimmed*; do bowtie2 -q --phred33 -N 0 -L 17 -i S,0,2.50 -x OP50_F1F6 -U $file -S mapped_$file; done
+for file in trimmed*; do bowtie2 -q --phred33 -N 0 -L 17 -i S,0,2.50 -x OP50_F1F6 -U $file -S OP50_mapped_$file.sam; done
