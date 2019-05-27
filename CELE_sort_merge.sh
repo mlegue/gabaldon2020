@@ -12,7 +12,3 @@ for file in CELE_mapped*
 do 
 samtools view -bS $file > $file.bam
 done
-for bam in *.bam
-do
-samtools sort -o sorted_$file.bam
-done
