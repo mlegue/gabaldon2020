@@ -10,5 +10,5 @@ module load SAMtools
 
 for bamfile in *.bam
 do
-samtools sort -o sorted_$bam.bam
+samtools sort -o sorted_$bamfile.bam
 done
