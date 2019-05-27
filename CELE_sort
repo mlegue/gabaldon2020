@@ -1,0 +1,6 @@
+
+
+for bamfile in *.bam
+do
+samtools sort -o sorted_$bam.bam
+done
