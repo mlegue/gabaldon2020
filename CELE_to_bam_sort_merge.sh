@@ -10,7 +10,7 @@ module load SAMtools
 
 for file in CELE_mapped*
 do 
-samtools view -b -h | samtools sort - > sorted_$file.bam
+samtools view -b -h | samtools sort -o sorted_$file.bam -O bam -
 done
 
 $mkdir merged
