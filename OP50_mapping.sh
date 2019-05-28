@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=PAO_mapping 
+#SBATCH --job-name=OP50_mapping 
 #SBATCH --mem-per-cpu=5G
 #SBATCH -n 6
 #SBATCH -c 2
