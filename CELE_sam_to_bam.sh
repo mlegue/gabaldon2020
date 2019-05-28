@@ -10,5 +10,5 @@ module load SAMtools
 
 for file in CELE_mapped*
 do 
-samtools view -bS $file > $file.bam
+samtools view -bSh | samtools sort $file > $file.bam
 done
