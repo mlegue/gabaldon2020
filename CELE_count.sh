@@ -10,5 +10,5 @@ module load HTSeq
 
  for sample in *.bam
  do
-   htseq-count -f bam -s no -m intersection-nonempty $sample CELE_gff.gff > count_$sample.count
+   htseq-count -f bam -s no -m intersection-nonempty --order=pos -t sRNA $sample CELE_gff.gff > count_$sample.count
  done
