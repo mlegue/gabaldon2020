@@ -3,8 +3,8 @@
 #SBATCH --mem-per-cpu=5G
 #SBATCH -n 6
 #SBATCH -c 2
-#SBATCH --output=salida.txt
-#SBATCH --error=error.txt
+#SBATCH --output=PAO_output.txt
+#SBATCH --error=PAO_error.txt
 
 module load Bowtie2
 
