@@ -10,5 +10,17 @@ module load SAMtools
 
 for file in CELE_mapped*
 do 
-samtools view -bSh | samtools sort $file > $file.bam
+samtools view -b -h | samtools sort - > sorted_$file.bam
+done
+
+$mkdir merged
+
+for L1 in sorted_*_L001_*.bam
+do
+    echo $L1
+    L2=`echo $L1 | sed 's/_L001_/_L002_/'`
+    L3=`echo $L1 | sed 's/_L001_/_L003_/'`
+    L4=`echo $L1 | sed 's/_L001_/_L004_/'`
+    merged=`echo $L1 | sed 's/_L001_/_merged_/'`
+    samtools merge ./merged/${merged} ${L1} ${L2} ${L3} ${L4}
 done
