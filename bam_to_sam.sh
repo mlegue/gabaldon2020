@@ -1,10 +1,10 @@
 #!/bin/bash
-#SBATCH --job-name=CELE_bam_sort
+#SBATCH --job-name=CELE_bam_to_sam
 #SBATCH --mem-per-cpu=5G
 #SBATCH -n 6
 #SBATCH -c 2
-#SBATCH --output=CELE_bam_output.txt
-#SBATCH --error=CELE_bam_error.txt
+#SBATCH --output=CELE_sam_output.txt
+#SBATCH --error=CELE_sam_error.txt
 
 module load SAMtools
 
