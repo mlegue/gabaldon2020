@@ -8,7 +8,9 @@
 
 module load SAMtools
 
+mkdir samfiles
+
 for sample in *.bam
 do
-samtools view -h -o sam_$sample.sam $sample
+samtools view -h $sample > ./samfiles/$sample.sam
 done
