@@ -12,5 +12,5 @@ mkdir counts
 
  for sample in *.bam
  do
-   htseq-count -f bam -s yes -m intersection-nonempty --order=pos -t sRNA $sample CELE_gff.gff > ./counts/ $sample.count
+   htseq-count -f bam -s yes -m intersection-nonempty --order=pos -t sRNA $sample CELE_gff.gff > ./counts/$sample.count
  done
