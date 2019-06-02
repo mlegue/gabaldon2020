@@ -7,8 +7,11 @@
 #SBATCH --error=CELE_sort_error.txt
 
 module load SAMtools
+mkdir Sorted
 
-for bamfile in *.bam
+for file in ./Unsorted/*.bam
 do
-samtools sort -o sorted_$bamfile.bam
+samtools sort $file ./Sorted/sorted_$file.bam
 done
+
+
