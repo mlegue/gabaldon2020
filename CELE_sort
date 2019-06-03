@@ -11,7 +11,8 @@ mkdir Sorted
 
 for file in ./Unsorted/*.bam
 do
-samtools sort $file ./Sorted/sorted_$file.bam
+samtools sort -o ./Sorted/sorted_$file.bam $file
+
 done
 
 
