@@ -42,35 +42,41 @@ fi
 raw_dir="/home/marcela/Samples_ready"
 
 #get reference genome and (own)annotations
-cp /home/marcela/Genomes/c_elegans.PRJNA13758.WS267.genomic.fa $sourcedir/celegans.fa
-cp /home/marcela/Genomes/CELE_gff.gff $sourcedir/celegans.gff
-#cat /home/marcela/genomes/c_elegans.PRJNA13758.WS256.annotations.gff3_ncf | awk 'BEGIN{OFS="\t"};{print $1, $2, "ncRNA", $4, $5, $6, $7, $8, $9}' > $sourcedir/celegans.gff3
+scp /home/marcela/Genomes/c_elegans.PRJNA13758.WS267.genomic.fa $sourcedir/celegans.fa
+scp /home/marcela/Genomes/CELE_gff.gff $sourcedir/celegans.gff
+#for other references use cat /genomes/c_elegans.PRJNA13758.WS256.annotations.gff3_ncf | awk 'BEGIN{OFS="\t"};{print $1, $2, "ncRNA", $4, $5, $6, $7, $8, $9}' > $sourcedir/celegans.gff3
 
-#variable for reference genome
+#variable for reference genome and annotations
 refCelegans="$sourcedir/celegans.fa"
-
-#variable for sRNA database
 gffCelegans="$sourcedir/celegans.gff"
 
 #sample names
-samplelist="S10_OP50postPAO1_F4_seq1.fastq.gz S13_PAO1_F5_seq1.fastq.gz  S17_PAO1_F6_seq1.fastq.gz S20_OP50control_FX_seq1.fastq.gz S5_PAO1_F2_seq1.fastq.gz S10_OP50postPAO1_F4_seq3.fastq.gz S14_PAO1_F5_seq1.fastq.gz S17_PAO1_F6_seq3.fastq.gz S21_OP50control_FX_seq1.fastq.gz S6_PAO1_F2_seq1.fastq.gz
-S11_OP50postPAO1_F4_seq1.fastq.gz S14_PAO1_F5_seq3.fastq.gz S18_PAO1_F6_seq1.fastq.gz S21_OP50control_FX_seq3.fastq.gz S7_OP50postPAO1_F3_seq1.fastq.gz S11_OP50postPAO1_F4_seq3.fastq.gz S15_PAO1_F5_seq1.fastq.gz S18_PAO1_F6_seq3.fastq.gz S2_PAO1_F1_seq1.fastq.gz S8_OP50postPAO1_F3_seq1.fastq.gz
-S12_OP50postPAO1_F4_seq1.fastq.gz S15_PAO1_F5_seq3.fastq.gz S19_OP50control_FX_seq1.fastq.gz S3_PAO1_F1_seq1.fastq.gz S9_OP50postPAO1_F3_seq1.fastq.gz S12_OP50postPAO1_F4_seq3.fastq.gz S16_PAO1_F6_seq1.fastq.gz S1_PAO1_F1_seq1.fastq.gz S4_PAO1_F2_seq1.fastq.gz"
+samplelist="S10_OP50postPAO1_F4_seq1 S13_PAO1_F5_seq1 S17_PAO1_F6_seq1 S20_OP50control_FX_seq1 S5_PAO1_F2_seq1 S10_OP50postPAO1_F4_seq3 S14_PAO1_F5_seq1 S17_PAO1_F6_seq3 S21_OP50control_FX_seq1 S6_PAO1_F2_seq1
+S11_OP50postPAO1_F4_seq1 S14_PAO1_F5_seq3 S18_PAO1_F6_seq1 S21_OP50control_FX_seq3 S7_OP50postPAO1_F3_seq1 S11_OP50postPAO1_F4_seq3 S15_PAO1_F5_seq1 S18_PAO1_F6_seq3 S2_PAO1_F1_seq1 S8_OP50postPAO1_F3_seq1
+S12_OP50postPAO1_F4_seq1 S15_PAO1_F5_seq3 S19_OP50control_FX_seq1 S3_PAO1_F1_seq1 S9_OP50postPAO1_F3_seq1 S12_OP50postPAO1_F4_seq3 S16_PAO1_F6_seq1 S1_PAO1_F1_seq1 S4_PAO1_F2_seq1"
+
+#trimming and cutadapt is ready in Samples_ready folder. Just unzip files and place in read folder.
+for i in $samplelist
+do
+  sample_input="$raw_dir/${i}.fastq.gz"
+  sample_output="$readdir/${i}_cut.fastq"
+zcat $sample_input > $sample_output
 
 #mapping
 ref=$refCelegans
 
 #indexing of reference file with bowtie
-#bowtie2-build -f $ref $sourcedir/celegans #index is ready
+#bowtie2-build -f $ref $sourcedir/CELE_F1F6 #index CELE_F1F6 is ready
+scp /home/marcela/Index/*.bt2 $sourcedir/
 
- for i in $samplelist
- do
- reads="$readdir/${i}_trim.fastq"
- sorted="$bamdir/${i}_sorted"
+#prepare Bowtie2 input and output
+for i in $samplelist
+  do reads="$readdir/${i}.fastq"
+     sorted="$bamdir/${i}_sorted"
 
 #bowtie2: map reads in fastq format to reference genome. the quality score of the reads is encoded in phred33. Doesn't report reads that can map in more than one place on the genome. Allow 1 mismatched nucleotides in seed alignment (seed set to 17 as it is the length of the smallest read we filtered (default is 20)). The seed interval (how separated are seeds taken from one read) is calculated as f(x) = 0 + 2.5 * sqrt(x), where x is the read length (roughly two seeds per reads as reads are 36 or smaller). These seeding parameters should enable a rapid mapping and little overlap is needed (I think) as reads are short. By default, 15% of ambiguous character per read is allowed. 
 #test time for computing for  or two mismatches
- bowtie2 -q --phred33 -N 1 -L 17 -i S,0,2.50 -x $sourcedir/celegans -U $reads | samtools view -bSh - | samtools sort - $sorted
+ bowtie2 -q --phred33 -N 1 -L 17 -i S,0,2.50 -x $sourcedir/CELE_F1F6 -U $reads | samtools view -bSh - | samtools sort - $sorted
  
 #prepare file for summary of mapping 
  mapped="$bamdir/${i}_align_summary.txt"
