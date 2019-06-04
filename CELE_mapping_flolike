@@ -1,8 +1,15 @@
 #!/bin/bash
-# run using bash transcriptomics.sh
+#SBATCH --job-name=CELE_map_flo
+#SBATCH --mem-per-cpu=5G
+#SBATCH -n 6
+#SBATCH -c 2
+#SBATCH --output=CELE_map_flo_output.txt
+#SBATCH --error=CELE_map_flo_error.txt
+
+#load needed softwares
+module load Bowtie2
 
 #define directories
-
 maindir="$1"
 sourcedir="$maindir/source"
 readdir="$maindir/read"
@@ -11,122 +18,56 @@ trackdir="$maindir/tracks"
 countsdir="$maindir/counts"
 resultsdir="$maindir/results"
 
-
 #create directories if non existent
 if [ ! -d $sourcedir ]; then
         mkdir -p $sourcedir
 fi
-
 if [ ! -d $readdir ]; then
         mkdir -p $readdir
 fi
-
 if [ ! -d $bamdir ]; then
         mkdir -p $bamdir
 fi
-
 if [ ! -d $trackdir ]; then
         mkdir -p $trackdir
 fi
-
 if [ ! -d $countsdir ]; then
         mkdir -p $countsdir
 fi
-
 if [ ! -d $resultsdir ]; then
         mkdir -p $resultsdir
 fi
 
-
 #set location of raw data
-#raw_dir="/home/marcela/raw_data"
-raw_dir="/home/marcela/raw_data"
+raw_dir="/home/marcela/Samples_ready"
 
-#install needed softwares
-#sh install_software.sh 
-
-
-#Choose which part of the analysis to carry
-echo "Choose which part of the analysis to run:\n\n For the complete analysis type \"all\" \n For sequence cleaning only type \"sc\" \n For the mapping only type \"map\" \n For the counts type \"count\" \n For the differential expression analysis and figures type \"de\" \n \n to run the whole analysis starting at different step type \"name_of_step-all\" (for example to do the whole analysis starting from the mapping type \"map-all\") \n" ;
-read REPLY;
-
-case $REPLY in
- *all )
-follow="yes";;
- * )
-follow="no";;
-esac
-
-case $REPLY in 
- all* )
-start="1";;
- sc* )
-start="1";;
- map* )
-start="2" ;;
- count* )
-start="3";;
- de* )
-start="4";;
-esac
-
-
-#define bacteria-specific variables
-#get reference genome
-cp /home/marcela/genomes/c_elegans.PRJNA13758.WS256.genomic.fa $sourcedir/celegans.fasta
-#cp /home/marcela/genomes/c_elegans.PRJNA13758.WS256.annotations.gff3_ncf $sourcedir/celegans.gff3
+#get reference genome and (own)annotations
+cp /home/marcela/Genomes/c_elegans.PRJNA13758.WS267.genomic.fa $sourcedir/celegans.fa
+cp /home/marcela/Genomes/CELE_gff.gff $sourcedir/celegans.gff
 #cat /home/marcela/genomes/c_elegans.PRJNA13758.WS256.annotations.gff3_ncf | awk 'BEGIN{OFS="\t"};{print $1, $2, "ncRNA", $4, $5, $6, $7, $8, $9}' > $sourcedir/celegans.gff3
-cat /home/marcela/genomes/c_elegans.PRJNA13758.WS256.annotations_nocont_nc.gff3 | awk 'BEGIN{OFS="\t"};{print $1, $2, "ncRNA", $4, $5, $6, $7, $8, $9}' | sed 's/ID=/gene_id=/g' | sed 's/^/chr/'  > $sourcedir/celegans_nocont.gff3
-cat /home/marcela/genomes/c_elegans.PRJNA13758.WS256.annotations_cont_nc.gff3 | awk 'BEGIN{OFS="\t"};{print $1, $2, "ncRNA", $4, $5, $6, $7, $8, $9}' | sed 's/ID=/gene_id=/g' | sed 's/^/chr/'  > $sourcedir/celegans_cont.gff3
 
 #variable for reference genome
-refCelegans="$sourcedir/celegans.fasta"
+refCelegans="$sourcedir/celegans.fa"
 
 #variable for sRNA database
-gffCelegans_nocont="$sourcedir/celegans_nocont.gff3"
-gffCelegans_cont="$sourcedir/celegans_cont.gff3"
+gffCelegans="$sourcedir/celegans.gff"
 
 #sample names
-#samplelist="A_F1_coli B_F1_coli C_F1_coli D_F2_coli"
-samplelist="A_F1_coli B_F1_coli C_F1_coli D_F2_coli E_F2_coli F_F2_coli S_Naive_coli T_Naive_coli U_Naive_coli M_F1_aeru N_F1_aeru O_F1_aeru P_F2_aeru Q_F2_aeru R_F2_aeru Y_Naive_aeru Z_Naive_aeru ZZ_Naive_aeru G_F1_salm H_F1_salm I_F1_salm J_F2_salm K_F2_salm L_F2_salm V_Naive_salm W_Naive_salm X_Naive_salm ZA_Naive_salm ZB_Naive_salm ZC_Naive_salm ZD_Naive_salm"
+samplelist="S10_OP50postPAO1_F4_seq1.fastq.gz S13_PAO1_F5_seq1.fastq.gz  S17_PAO1_F6_seq1.fastq.gz S20_OP50control_FX_seq1.fastq.gz S5_PAO1_F2_seq1.fastq.gz S10_OP50postPAO1_F4_seq3.fastq.gz S14_PAO1_F5_seq1.fastq.gz S17_PAO1_F6_seq3.fastq.gz S21_OP50control_FX_seq1.fastq.gz S6_PAO1_F2_seq1.fastq.gz
+S11_OP50postPAO1_F4_seq1.fastq.gz S14_PAO1_F5_seq3.fastq.gz S18_PAO1_F6_seq1.fastq.gz S21_OP50control_FX_seq3.fastq.gz S7_OP50postPAO1_F3_seq1.fastq.gz S11_OP50postPAO1_F4_seq3.fastq.gz S15_PAO1_F5_seq1.fastq.gz S18_PAO1_F6_seq3.fastq.gz S2_PAO1_F1_seq1.fastq.gz S8_OP50postPAO1_F3_seq1.fastq.gz
+S12_OP50postPAO1_F4_seq1.fastq.gz S15_PAO1_F5_seq3.fastq.gz S19_OP50control_FX_seq1.fastq.gz S3_PAO1_F1_seq1.fastq.gz S9_OP50postPAO1_F3_seq1.fastq.gz S12_OP50postPAO1_F4_seq3.fastq.gz S16_PAO1_F6_seq1.fastq.gz S1_PAO1_F1_seq1.fastq.gz S4_PAO1_F2_seq1.fastq.gz"
 
-
-#step 1 get genome, cut adaptor, trim sequences 
-if [ $start =  1 ]
-then
- 
-ref=$refCelegans
+#genome name
 
  for i in $samplelist
  do
+samples="1 2 3"; for i in $samples; do echo $i> done
 
- #b cut adaptors
-#cutadapt adaptor: TGGAATTCTCGGGTGCCAAGG
-  sample_input="$raw_dir/${i}.fastq.gz"
-  sample_output="$readdir/${i}_cut.fastq"
-  ~/.local/bin/cutadapt -a TGGAATTCTCGGGTGCCAAGG  -o $sample_output  $sample_input 
- 
- #c trim sequences
-#trimmomatic base quality encoding: phred33; average quality required over 4 bases: 30; minimum read length: 17b (faster and 15b are few and not very useful)
-  sample_input="$readdir/${i}_cut.fastq"
-  sample_output="$readdir/${i}_trim.fastq"
-  java -jar ~/tools/Trimmomatic-0.36/trimmomatic-0.36.jar SE -phred33 $sample_input $sample_output SLIDINGWINDOW:4:30 MINLEN:17
- 
- #c quality control before and after trimming
- fastqc $sample_input 
- fastqc $sample_output
-
- done
-start="done";
-fi
-
-#step 2 mapping
-if  [ $start = done ] &&  [ $follow = yes  ] || [ $start =  2 ]  ;
-then
- 
+#mapping
 ref=$refCelegans
+
 #indexing of reference file with bowtie
- bowtie2-build -f $ref $sourcedir/celegans
+#bowtie2-build -f $ref $sourcedir/celegans #index is ready
 
  for i in $samplelist
  do
