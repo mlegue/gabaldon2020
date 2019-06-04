@@ -57,12 +57,6 @@ samplelist="S10_OP50postPAO1_F4_seq1.fastq.gz S13_PAO1_F5_seq1.fastq.gz  S17_PAO
 S11_OP50postPAO1_F4_seq1.fastq.gz S14_PAO1_F5_seq3.fastq.gz S18_PAO1_F6_seq1.fastq.gz S21_OP50control_FX_seq3.fastq.gz S7_OP50postPAO1_F3_seq1.fastq.gz S11_OP50postPAO1_F4_seq3.fastq.gz S15_PAO1_F5_seq1.fastq.gz S18_PAO1_F6_seq3.fastq.gz S2_PAO1_F1_seq1.fastq.gz S8_OP50postPAO1_F3_seq1.fastq.gz
 S12_OP50postPAO1_F4_seq1.fastq.gz S15_PAO1_F5_seq3.fastq.gz S19_OP50control_FX_seq1.fastq.gz S3_PAO1_F1_seq1.fastq.gz S9_OP50postPAO1_F3_seq1.fastq.gz S12_OP50postPAO1_F4_seq3.fastq.gz S16_PAO1_F6_seq1.fastq.gz S1_PAO1_F1_seq1.fastq.gz S4_PAO1_F2_seq1.fastq.gz"
 
-#genome name
-
- for i in $samplelist
- do
-samples="1 2 3"; for i in $samples; do echo $i> done
-
 #mapping
 ref=$refCelegans
 
@@ -71,12 +65,12 @@ ref=$refCelegans
 
  for i in $samplelist
  do
- read1="$readdir/${i}_trim.fastq"
+ reads="$readdir/${i}_trim.fastq"
  sorted="$bamdir/${i}_sorted"
 
 #bowtie2: map reads in fastq format to reference genome. the quality score of the reads is encoded in phred33. Doesn't report reads that can map in more than one place on the genome. Allow 1 mismatched nucleotides in seed alignment (seed set to 17 as it is the length of the smallest read we filtered (default is 20)). The seed interval (how separated are seeds taken from one read) is calculated as f(x) = 0 + 2.5 * sqrt(x), where x is the read length (roughly two seeds per reads as reads are 36 or smaller). These seeding parameters should enable a rapid mapping and little overlap is needed (I think) as reads are short. By default, 15% of ambiguous character per read is allowed. 
 #test time for computing for  or two mismatches
- bowtie2 -q --phred33 -N 1 -L 17 -i S,0,2.50 -x $sourcedir/celegans -U $read1 | samtools view -bSh - | samtools sort - $sorted
+ bowtie2 -q --phred33 -N 1 -L 17 -i S,0,2.50 -x $sourcedir/celegans -U $reads | samtools view -bSh - | samtools sort - $sorted
  
 #prepare file for summary of mapping 
  mapped="$bamdir/${i}_align_summary.txt"
