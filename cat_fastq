@@ -7,12 +7,19 @@
 #SBATCH --error=CELE_cat_error.txt
 
 mkdir Samples_fastq
-zcat ./Cutadapted/trimmed_GM1541-10*L00?_R1_001.fastq.gz >> ./Samples_fastq/S10_OP50postPAO1_F4_R1_seq1.fastq
-zcat ./Cutadapted/trimmed_GM1541-11*L00?_R1_001.fastq.gz >> ./Samples_fastq/S11_OP50postPAO1_F4_R1_seq1.fastq
-zcat ./Cutadapted/trimmed_GM1541-12*L00?_R1_001.fastq.gz >> ./Samples_fastq/S12_OP50postPAO1_F4_R1_seq1.fastq
-zcat ./Cutadapted/trimmed_GM1541-13*L00?_R1_001.fastq.gz >> ./Samples_fastq/S13_OP50postPAO1_F4_R1_seq1.fastq
-zcat ./Cutadapted/trimmed_GM1541-14*L00?_R1_001.fastq.gz >> ./Samples_fastq/S14_OP50postPAO1_F4_R1_seq1.fastq
-zcat ./Cutadapted/trimmed_GM1541-15*L00?_R1_001.fastq.gz >> ./Samples_fastq/S15
+cat ./Cutadapted/trimmed_GM1541-10*L00?_R1_001.fastq.gz > ./Samples_fastq/S10_OP50postPAO1_F4_seq1.fastq.gz
+cat ./Cutadapted/trimmed_GM1541-11*L00?_R1_001.fastq.gz > ./Samples_fastq/S11_OP50postPAO1_F4_seq1.fastq.gz
+cat ./Cutadapted/trimmed_GM1541-12*L00?_R1_001.fastq.gz > ./Samples_fastq/S12_OP50postPAO1_F4_seq1.fastq.gz
+cat ./Cutadapted/trimmed_GM1541-13*L00?_R1_001.fastq.gz > ./Samples_fastq/S13_OP50postPAO1_F5_seq1.fastq.gz
+cat ./Cutadapted/trimmed_GM1541-14*L00?_R1_001.fastq.gz > ./Samples_fastq/S14_OP50postPAO1_F5_seq1.fastq.gz
+cat ./Cutadapted/trimmed_GM1541-15*L00?_R1_001.fastq.gz > ./Samples_fastq/S15_OP50postPAO1_F5_seq1.fastq.gz
+cat ./Cutadapted/trimmed_GM1541-16*L00?_R1_001.fastq.gz > ./Samples_fastq/S16_OP50postPAO1_F5_seq1.fastq.gz
+cat ./Cutadapted/trimmed_GM1541-17*L00?_R1_001.fastq.gz > ./Samples_fastq/S17_OP50postPAO1_F5_seq1.fastq.gz
+cat ./Cutadapted/trimmed_GM1541-18*L00?_R1_001.fastq.gz > ./Samples_fastq/S18_OP50postPAO1_F5_seq1.fastq.gz
+cat ./Cutadapted/trimmed_GM1541-19*L00?_R1_001.fastq.gz > ./Samples_fastq/S19_OP50postPAO1_F5_seq1.fastq.gz
+cat ./Cutadapted/trimmed_GM1541-20*L00?_R1_001.fastq.gz > ./Samples_fastq/S20_OP50postPAO1_F5_seq1.fastq.gz
+cat ./Cutadapted/trimmed_GM1541-21*L00?_R1_001.fastq.gz > ./Samples_fastq/S21_OP50postPAO1_F5_seq1.fastq.gz
+
 _OP50postPAO1_F4_R1_seq1.fastq
  OP50postPAO1_F4_R1_seq3.bam sorted_unsorted_CELE_mapped_trimmed_GM1541-10_S1_L00?_R1_seq3.fastq.gz.bam.bam
 samtools merge OP50postPAO1_F4_R2_seq1.bam sorted_unsorted_CELE_mapped_trimmed_GM1541-11_S12_L00?_R1_001.fastq.gz.bam.bam
