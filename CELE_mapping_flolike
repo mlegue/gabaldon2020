@@ -1,0 +1,178 @@
+#!/bin/bash
+# run using bash transcriptomics.sh
+
+#define directories
+
+maindir="$1"
+sourcedir="$maindir/source"
+readdir="$maindir/read"
+bamdir="$maindir/bam"
+trackdir="$maindir/tracks"
+countsdir="$maindir/counts"
+resultsdir="$maindir/results"
+
+
+#create directories if non existent
+if [ ! -d $sourcedir ]; then
+        mkdir -p $sourcedir
+fi
+
+if [ ! -d $readdir ]; then
+        mkdir -p $readdir
+fi
+
+if [ ! -d $bamdir ]; then
+        mkdir -p $bamdir
+fi
+
+if [ ! -d $trackdir ]; then
+        mkdir -p $trackdir
+fi
+
+if [ ! -d $countsdir ]; then
+        mkdir -p $countsdir
+fi
+
+if [ ! -d $resultsdir ]; then
+        mkdir -p $resultsdir
+fi
+
+
+#set location of raw data
+#raw_dir="/home/marcela/raw_data"
+raw_dir="/home/marcela/raw_data"
+
+#install needed softwares
+#sh install_software.sh 
+
+
+#Choose which part of the analysis to carry
+echo "Choose which part of the analysis to run:\n\n For the complete analysis type \"all\" \n For sequence cleaning only type \"sc\" \n For the mapping only type \"map\" \n For the counts type \"count\" \n For the differential expression analysis and figures type \"de\" \n \n to run the whole analysis starting at different step type \"name_of_step-all\" (for example to do the whole analysis starting from the mapping type \"map-all\") \n" ;
+read REPLY;
+
+case $REPLY in
+ *all )
+follow="yes";;
+ * )
+follow="no";;
+esac
+
+case $REPLY in 
+ all* )
+start="1";;
+ sc* )
+start="1";;
+ map* )
+start="2" ;;
+ count* )
+start="3";;
+ de* )
+start="4";;
+esac
+
+
+#define bacteria-specific variables
+#get reference genome
+cp /home/marcela/genomes/c_elegans.PRJNA13758.WS256.genomic.fa $sourcedir/celegans.fasta
+#cp /home/marcela/genomes/c_elegans.PRJNA13758.WS256.annotations.gff3_ncf $sourcedir/celegans.gff3
+#cat /home/marcela/genomes/c_elegans.PRJNA13758.WS256.annotations.gff3_ncf | awk 'BEGIN{OFS="\t"};{print $1, $2, "ncRNA", $4, $5, $6, $7, $8, $9}' > $sourcedir/celegans.gff3
+cat /home/marcela/genomes/c_elegans.PRJNA13758.WS256.annotations_nocont_nc.gff3 | awk 'BEGIN{OFS="\t"};{print $1, $2, "ncRNA", $4, $5, $6, $7, $8, $9}' | sed 's/ID=/gene_id=/g' | sed 's/^/chr/'  > $sourcedir/celegans_nocont.gff3
+cat /home/marcela/genomes/c_elegans.PRJNA13758.WS256.annotations_cont_nc.gff3 | awk 'BEGIN{OFS="\t"};{print $1, $2, "ncRNA", $4, $5, $6, $7, $8, $9}' | sed 's/ID=/gene_id=/g' | sed 's/^/chr/'  > $sourcedir/celegans_cont.gff3
+
+#variable for reference genome
+refCelegans="$sourcedir/celegans.fasta"
+
+#variable for sRNA database
+gffCelegans_nocont="$sourcedir/celegans_nocont.gff3"
+gffCelegans_cont="$sourcedir/celegans_cont.gff3"
+
+#sample names
+#samplelist="A_F1_coli B_F1_coli C_F1_coli D_F2_coli"
+samplelist="A_F1_coli B_F1_coli C_F1_coli D_F2_coli E_F2_coli F_F2_coli S_Naive_coli T_Naive_coli U_Naive_coli M_F1_aeru N_F1_aeru O_F1_aeru P_F2_aeru Q_F2_aeru R_F2_aeru Y_Naive_aeru Z_Naive_aeru ZZ_Naive_aeru G_F1_salm H_F1_salm I_F1_salm J_F2_salm K_F2_salm L_F2_salm V_Naive_salm W_Naive_salm X_Naive_salm ZA_Naive_salm ZB_Naive_salm ZC_Naive_salm ZD_Naive_salm"
+
+
+#step 1 get genome, cut adaptor, trim sequences 
+if [ $start =  1 ]
+then
+ 
+ref=$refCelegans
+
+ for i in $samplelist
+ do
+
+ #b cut adaptors
+#cutadapt adaptor: TGGAATTCTCGGGTGCCAAGG
+  sample_input="$raw_dir/${i}.fastq.gz"
+  sample_output="$readdir/${i}_cut.fastq"
+  ~/.local/bin/cutadapt -a TGGAATTCTCGGGTGCCAAGG  -o $sample_output  $sample_input 
+ 
+ #c trim sequences
+#trimmomatic base quality encoding: phred33; average quality required over 4 bases: 30; minimum read length: 17b (faster and 15b are few and not very useful)
+  sample_input="$readdir/${i}_cut.fastq"
+  sample_output="$readdir/${i}_trim.fastq"
+  java -jar ~/tools/Trimmomatic-0.36/trimmomatic-0.36.jar SE -phred33 $sample_input $sample_output SLIDINGWINDOW:4:30 MINLEN:17
+ 
+ #c quality control before and after trimming
+ fastqc $sample_input 
+ fastqc $sample_output
+
+ done
+start="done";
+fi
+
+#step 2 mapping
+if  [ $start = done ] &&  [ $follow = yes  ] || [ $start =  2 ]  ;
+then
+ 
+ref=$refCelegans
+#indexing of reference file with bowtie
+ bowtie2-build -f $ref $sourcedir/celegans
+
+ for i in $samplelist
+ do
+ read1="$readdir/${i}_trim.fastq"
+ sorted="$bamdir/${i}_sorted"
+
+#bowtie2: map reads in fastq format to reference genome. the quality score of the reads is encoded in phred33. Doesn't report reads that can map in more than one place on the genome. Allow 1 mismatched nucleotides in seed alignment (seed set to 17 as it is the length of the smallest read we filtered (default is 20)). The seed interval (how separated are seeds taken from one read) is calculated as f(x) = 0 + 2.5 * sqrt(x), where x is the read length (roughly two seeds per reads as reads are 36 or smaller). These seeding parameters should enable a rapid mapping and little overlap is needed (I think) as reads are short. By default, 15% of ambiguous character per read is allowed. 
+#test time for computing for  or two mismatches
+ bowtie2 -q --phred33 -N 1 -L 17 -i S,0,2.50 -x $sourcedir/celegans -U $read1 | samtools view -bSh - | samtools sort - $sorted
+ 
+#prepare file for summary of mapping 
+ mapped="$bamdir/${i}_align_summary.txt"
+ samtools flagstat ${sorted}.bam > $mapped
+
+
+ echo "do tracks\n";
+
+  bam_fw="$bamdir/${i}_fw.bam"
+  bam_re="$bamdir/${i}_re.bam"
+  tmpbed_fw="$trackdir/${i}_fw_tmp.bed"
+  tmpbed_re="$trackdir/${i}_re_tmp.bed"
+  bed_fw="$trackdir/${i}_fw.bed"
+  bed_re="$trackdir/${i}_re.bed"
+
+
+  #read reverse strand, transcript on reverse strand
+   samtools view -bh -f 16 ${sorted}.bam > $bam_re
+
+  #read not on reverse strand, transcript on forward strand in genome
+   samtools view -bh -F 16 ${sorted}.bam > $bam_fw
+
+  #make bedfiles 
+   genomeCoverageBed -ibam $bam_fw -bg -g $ref > $tmpbed_fw 
+   genomeCoverageBed -ibam $bam_re -bg -g $ref > $tmpbed_re 
+
+  #add track specifications 
+   echo "track type=\"bedGraph\" name=\"transcript forward $i\" color=0,0,128 visiblity=full" > $bed_fw 
+   cat $tmpbed_fw >> $bed_fw  
+   sed -i 's/chrMtDNA/chrM/g'  $bed_fw 
+
+   echo "track type=\"bedGraph\" name=\"transcript reverse $i\" color=128,0,0 visiblity=full" > $bed_re 
+   cat $tmpbed_re >> $bed_re
+   sed -i 's/chrMtDNA/chrM/g'  $bed_re 
+
+   rm $tmpbed_fw $tmpbed_re $bam_fw $bam_re
+ 
+
+
+done
