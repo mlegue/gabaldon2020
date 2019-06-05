@@ -40,7 +40,7 @@ if [ ! -d $resultsdir ]; then
 fi
 
 #set location of raw data
-raw_dir="/home/mlegue/Samples_ready"
+raw_dir="/home/mlegue/Samples_fastq"
 
 #get reference genome and (own)annotations
 scp /home/mlegueGenomes/c_elegans.PRJNA13758.WS267.genomic.fa $sourcedir/celegans.fa
@@ -56,12 +56,8 @@ samplelist="S10_OP50postPAO1_F4_seq1 S13_PAO1_F5_seq1 S17_PAO1_F6_seq1 S20_OP50c
 S11_OP50postPAO1_F4_seq1 S14_PAO1_F5_seq3 S18_PAO1_F6_seq1 S21_OP50control_FX_seq3 S7_OP50postPAO1_F3_seq1 S11_OP50postPAO1_F4_seq3 S15_PAO1_F5_seq1 S18_PAO1_F6_seq3 S2_PAO1_F1_seq1 S8_OP50postPAO1_F3_seq1
 S12_OP50postPAO1_F4_seq1 S15_PAO1_F5_seq3 S19_OP50control_FX_seq1 S3_PAO1_F1_seq1 S9_OP50postPAO1_F3_seq1 S12_OP50postPAO1_F4_seq3 S16_PAO1_F6_seq1 S1_PAO1_F1_seq1 S4_PAO1_F2_seq1"
 
-#trimming and cutadapt is ready in Samples_ready folder. Just unzip files and place in read folder.
-for i in $samplelist
-do
-  sample_input="$raw_dir/${i}.fastq.gz"
-  sample_output="$readdir/${i}_cut.fastq"
-zcat $sample_input > $sample_output
+#trimming and cutadapt is ready in Samples_fastq folder. Just place in read folder.
+scp $raw_dir/* $readdir/ 
 
 #mapping
 ref=$refCelegans
@@ -75,7 +71,7 @@ for i in $samplelist
   do reads="$readdir/${i}.fastq"
      sorted="$bamdir/${i}_sorted"
 
-#bowtie2: map reads in fastq format to reference genome. the quality score of the reads is encoded in phred33. Doesn't report reads that can map in more than one place on the genome. Allow 1 mismatched nucleotides in seed alignment (seed set to 17 as it is the length of the smallest read we filtered (default is 20)). The seed interval (how separated are seeds taken from one read) is calculated as f(x) = 0 + 2.5 * sqrt(x), where x is the read length (roughly two seeds per reads as reads are 36 or smaller). These seeding parameters should enable a rapid mapping and little overlap is needed (I think) as reads are short. By default, 15% of ambiguous character per read is allowed. 
+#bowtie2: map reads in fastq format to reference genome. Quality score of the reads encoded in phred33. Doesn't report reads that can map in more than one place on the genome. Allow 1 mismatched nucleotides in seed alignment (seed set to 17 as it is the length of the smallest read we filtered (default is 20)). The seed interval (how separated are seeds taken from one read) is calculated as f(x) = 0 + 2.5 * sqrt(x), where x is the read length (roughly two seeds per reads as reads are 36 or smaller). These seeding parameters should enable a rapid mapping and little overlap is needed (I think) as reads are short. By default, 15% of ambiguous character per read is allowed. 
 #test time for computing for  or two mismatches
  bowtie2 -q --phred33 -N 1 -L 17 -i S,0,2.50 -x $sourcedir/CELE_F1F6 -U $reads | samtools view -bSh - | samtools sort - $sorted
  
