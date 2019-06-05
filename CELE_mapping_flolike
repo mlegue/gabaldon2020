@@ -8,9 +8,10 @@
 
 #load needed softwares
 module load Bowtie2
+module load SAMtools
 
 #define directories
-maindir="$1"
+maindir="/home/mlegue"
 sourcedir="$maindir/source"
 readdir="$maindir/read"
 bamdir="$maindir/bam"
@@ -39,11 +40,11 @@ if [ ! -d $resultsdir ]; then
 fi
 
 #set location of raw data
-raw_dir="/home/marcela/Samples_ready"
+raw_dir="/home/mlegue/Samples_ready"
 
 #get reference genome and (own)annotations
-scp /home/marcela/Genomes/c_elegans.PRJNA13758.WS267.genomic.fa $sourcedir/celegans.fa
-scp /home/marcela/Genomes/CELE_gff.gff $sourcedir/celegans.gff
+scp /home/mlegueGenomes/c_elegans.PRJNA13758.WS267.genomic.fa $sourcedir/celegans.fa
+scp /home/mlegue/Genomes/CELE_gff.gff $sourcedir/celegans.gff
 #for other references use cat /genomes/c_elegans.PRJNA13758.WS256.annotations.gff3_ncf | awk 'BEGIN{OFS="\t"};{print $1, $2, "ncRNA", $4, $5, $6, $7, $8, $9}' > $sourcedir/celegans.gff3
 
 #variable for reference genome and annotations
